@@ -1,0 +1,9 @@
+# inherit_from: ../.rubocop.yml
+AllCops:
+  NewCops: enable
+
+Style/StringLiterals:
+ EnforcedStyle: "double_quotes"
+
+Naming/MemoizedInstanceVariableName:
+  EnforcedStyleForLeadingUnderscores: "required"

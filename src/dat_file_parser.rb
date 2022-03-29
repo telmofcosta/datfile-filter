@@ -1,5 +1,9 @@
-require 'ox'
+# frozen_string_literal: true
 
+require "ox"
+
+# Initial Ox::Sax xml machines parser
+# After using, data is available on the {data} attribute of the instance
 class DatFileParser < Ox::Sax
   MACHINE_PATH = %i[mame machine].freeze
   DATA_ATTRS = %i[name cloneof romof].freeze
@@ -17,20 +21,18 @@ class DatFileParser < Ox::Sax
     @path.length
   end
 
-  def instruct(target)
+  def instruct(_target)
     @instruct = true
   end
 
   # don't know what this is
-  def attr(name, str)
-  end
+  def attr(name, str); end
 
   def attr_value(name, value)
-    if @element
-      if DATA_ATTRS.include?(name)
-        @element[name] = value.as_s
-      end
-    end
+    return unless @element
+
+    @element[name] = value.as_s if DATA_ATTRS.include?(name)
+    $stderr.print("\r#{value.as_s[0]}") if name == :name
   end
 
   def attrs_done
@@ -40,16 +42,12 @@ class DatFileParser < Ox::Sax
 
   def start_element(name)
     @path.push(name)
-    if @path == MACHINE_PATH
-      @element = Element.new
-    end
+    @element = Element.new if @path == MACHINE_PATH
   end
 
-  def end_element(name)
+  def end_element(_name)
     @path.pop
   end
-
-  private
 
   Element = Struct.new(:name, :cloneof, :romof, keyword_init: true)
 end

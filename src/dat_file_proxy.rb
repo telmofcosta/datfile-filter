@@ -1,5 +1,9 @@
-require 'ox'
+# frozen_string_literal: true
 
+require "ox"
+
+# Xml Ox::Sax parser.
+# prints what it reads
 class DatFileProxy < Ox::Sax
   attr_accessor :path, :target_type
 
@@ -10,7 +14,7 @@ class DatFileProxy < Ox::Sax
   end
 
   def indent
-    '  ' * depth
+    "  " * depth
   end
 
   def element_context
@@ -22,83 +26,82 @@ class DatFileProxy < Ox::Sax
   end
 
   def instruct(target)
-    $stderr.puts "[SI] #{indent}#{target}"
+    warn "[SI] #{indent}#{target}"
     $stdout.print "<?#{target}"
     target_type.set_instruct
   end
 
   def end_instruct(target)
-    $stderr.puts "[EI] #{indent}#{target}"
+    warn "[EI] #{indent}#{target}"
     target_type.set_element
   end
 
   # don't know what this is
   def attr(name, str)
-    $stderr.puts "[AT] #{indent}#{name}=#{str}"
+    warn "[AT] #{indent}#{name}=#{str}"
   end
 
   def attr_value(name, value)
-    $stderr.puts "[AV] #{indent}#{name}=#{value.as_s}"
-    $stdout.print %Q( #{name}="#{value.as_s}")
+    warn "[AV] #{indent}#{name}=#{value.as_s}"
+    $stdout.print %( #{name}="#{value.as_s}")
   end
 
   def attrs_done
-    $stderr.puts "[AD] #{indent}>"
+    warn "[AD] #{indent}>"
     # $stdout.print(target_type.instruct? ? "?>" : ">")
   end
 
   # ignoring
   def doctype(str)
-    $stderr.puts "[DT] #{indent}#{str}"
+    warn "[DT] #{indent}#{str}"
   end
 
   # ignoring
   def comment(str)
-    $stderr.puts "[CO] #{indent}#{str}"
+    warn "[CO] #{indent}#{str}"
   end
 
   def cdata(str)
-    $stderr.puts "[CD] #{indent}#{str}"
+    warn "[CD] #{indent}#{str}"
     # $stdout.print("<![CDATA[#{str}]]>")
     element_context.add_cdata(str)
   end
 
   def text(str)
-    $stderr.puts "[TX] #{indent}#{str}"
+    warn "[TX] #{indent}#{str}"
     # $stdout.print str
     element_context.add_text(str)
   end
 
   def value(value)
-    $stderr.puts "[VL] #{indent}#{value.as_s}"
+    warn "[VL] #{indent}#{value.as_s}"
     # $stdout.print value.as_s
     element_context.add_text(value.as_s)
   end
 
   def start_element(name)
-    $stderr.puts "[SE] #{indent}<#{name}"
+    warn "[SE] #{indent}<#{name}"
     element_context&.flush(close: false)
     $stdout.print "\n#{indent}<#{name}"
-    path.push(ElementContext.new(name, depth: depth))
+    path.push(ElementContext.new(name, depth:))
   end
 
   def end_element(name)
-    $stderr.puts "[EE] #{indent}</#{name}>"
+    warn "[EE] #{indent}</#{name}>"
     # $stdout.print "\n#{indent}</#{name}>"
     element_context.flush(close: true)
     path.pop
   end
 
   def error(message, line, column)
-    $stderr.puts "[ER] error at #{line}:#{column} #{message}"
+    warn "[ER] error at #{line}:#{column} #{message}"
   end
 
   def abort(name)
-    $stderr.puts "[AB] #{name}"
+    warn "[AB] #{name}"
   end
 
-  private
-
+  # ContextText
   class ContextText
     def initialize(content)
       @content = content
@@ -109,6 +112,7 @@ class DatFileProxy < Ox::Sax
     end
   end
 
+  # ContextCData
   class ContextCData
     def initialize(content)
       @content = content
@@ -119,6 +123,7 @@ class DatFileProxy < Ox::Sax
     end
   end
 
+  # Target
   class Target
     def set_instruct
       @target = :instruct
@@ -137,6 +142,7 @@ class DatFileProxy < Ox::Sax
     end
   end
 
+  # ElementContext
   class ElementContext
     def initialize(name, depth:)
       @name = name
@@ -146,9 +152,8 @@ class DatFileProxy < Ox::Sax
     end
 
     def indent(depth)
-      '  ' * depth
+      "  " * depth
     end
-
 
     def add_text(text)
       @context_stack.push(ContextText.new(text))
@@ -159,35 +164,49 @@ class DatFileProxy < Ox::Sax
     end
 
     def content?
-      @context_stack.length > 0
+      @context_stack.length.positive?
     end
 
     def flush(close:)
       if close && !@is_start_closed && !content?
-        $stdout.print " />"
-        @is_start_closed = true
+        print_auto_close_tag
         return
       end
 
       is_one_liner = !@is_start_closed && close
 
-      if !@is_start_closed
-        $stdout.print ">"
-        @is_start_closed = true
-      end
+      print_on_finish_attributes unless @is_start_closed
 
+      print_attributes(is_one_liner)
+
+      print_end_element(is_one_liner) if close
+    end
+
+    private
+
+    def print_auto_close_tag
+      $stdout.print " />"
+      @is_start_closed = true
+    end
+
+    def print_on_finish_attributes
+      $stdout.print ">"
+      @is_start_closed = true
+    end
+
+    def print_attributes(is_one_liner)
       @context_stack.length.tap do
         @context_stack.each do |content|
-          $stdout.print "\n#{'  ' * (@depth + 1)}" if !is_one_liner
+          $stdout.print "\n#{'  ' * (@depth + 1)}" unless is_one_liner
           content.flush
         end
         @context_stack.clear
       end
+    end
 
-      if close
-        $stdout.print "\n#{'  ' * @depth}" if !is_one_liner
-        $stdout.print "</#{@name}>"
-      end
+    def print_end_element(is_one_liner)
+      $stdout.print "\n#{'  ' * @depth}" unless is_one_liner
+      $stdout.print "</#{@name}>"
     end
   end
 end

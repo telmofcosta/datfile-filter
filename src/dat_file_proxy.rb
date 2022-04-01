@@ -33,27 +33,30 @@ class DatFileProxy < Ox::Sax
 
   def end_instruct(target)
     warn "[EI] #{indent}#{target}"
+    $stdout.print "?>"
     target_type.set_element
   end
 
-  # don't know what this is
   def attr(name, str)
     warn "[AT] #{indent}#{name}=#{str}"
+    $stdout.print %( #{name}="#{str}")
   end
 
-  def attr_value(name, value)
-    warn "[AV] #{indent}#{name}=#{value.as_s}"
-    $stdout.print %( #{name}="#{value.as_s}")
-  end
+  # Either attr or attr_value is called.
+  # If attr_value is defined, attr will not be called.
+  # def attr_value(name, value)
+  #   warn "[AV] #{indent}#{name}=#{value.as_s}"
+  #   $stdout.print %( #{name}="#{value.as_s}")
+  # end
 
   def attrs_done
     warn "[AD] #{indent}>"
     # $stdout.print(target_type.instruct? ? "?>" : ">")
   end
 
-  # ignoring
   def doctype(str)
     warn "[DT] #{indent}#{str}"
+    $stdout.print "\n#{indent}<!DOCTYPE#{str}>"
   end
 
   # ignoring
@@ -73,11 +76,13 @@ class DatFileProxy < Ox::Sax
     element_context.add_text(str)
   end
 
-  def value(value)
-    warn "[VL] #{indent}#{value.as_s}"
-    # $stdout.print value.as_s
-    element_context.add_text(value.as_s)
-  end
+  # Either text or value is called.
+  # If value is defined, text will not be called.
+  # def value(value)
+  #   warn "[VL] #{indent}#{value.as_s}"
+  #   # $stdout.print value.as_s
+  #   element_context.add_text(value.as_s)
+  # end
 
   def start_element(name)
     warn "[SE] #{indent}<#{name}"

@@ -17,46 +17,44 @@ class XmlDebugger < Ox::Sax
   end
 
   def instruct(target)
-    warn "[INSTRUCT]      #{indent}#{target}"
+    warn "[INSTRUCT     ] #{indent}#{target}"
   end
 
   def end_instruct(target)
-    warn "[END_INSTRUCT]  #{indent}#{target}"
+    warn "[END_INSTRUCT ] #{indent}#{target}"
   end
 
   # don't know what this is
   def attr(name, str)
-    warn "[ATTR]          #{indent}#{name}=#{str}"
+    warn "[ATTR         ] #{indent}#{name}=#{str}"
   end
 
   def attr_value(name, value)
-    warn "[ATTR_VALUE]    #{indent}#{name}=#{value.as_s}"
+    warn "[ATTR_VALUE   ] #{indent}#{name}=#{value.as_s}"
   end
 
   def attrs_done
-    warn "[ATTRS_DONE]    #{indent}>"
+    warn "[ATTRS_DONE   ] #{indent}>"
   end
 
-  # ignoring
   def doctype(str)
-    warn "[DOCTYPE]       #{indent}#{str}"
+    warn "[DOCTYPE      ] #{indent}#{str}"
   end
 
-  # ignoring
   def comment(str)
-    warn "[COMMENT]       #{indent}#{str}"
+    warn "[COMMENT      ] #{indent}#{str}"
   end
 
   def cdata(str)
-    warn "[CDATA]         #{indent}#{str}"
+    warn "[CDATA        ] #{indent}#{str}"
   end
 
   def text(str)
-    warn "[TEXT]          #{indent}#{str}"
+    warn "[TEXT         ] #{indent}#{str}"
   end
 
   def value(value)
-    warn "[VALUE]         #{indent}#{value.as_s}"
+    warn "[VALUE        ] #{indent}#{value.as_s}"
   end
 
   def start_element(name)
@@ -65,7 +63,7 @@ class XmlDebugger < Ox::Sax
   end
 
   def end_element(name)
-    warn "[END_ELEMENT]   #{indent}</#{name}>"
+    warn "[END_ELEMENT  ] #{indent}</#{name}>"
     path.pop
   end
 
